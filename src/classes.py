@@ -19,21 +19,35 @@ class APICall:
     
     def send_request(self, updated_api_url):
         http_request = request.Request(url = updated_api_url , headers = self.token_header)
-        http_response = request.urlopen(http_request) # Send request and get http response from github server
-        return http_response
+        try:
+            http_response = request.urlopen(http_request) # Send request and get http response from github server
+        except error.HTTPError as e:
+            print(e.code, e.reason) # If request is invalid due to http error, print error status code
+        except error.URLError as u:
+            print(u.reason)  # If request is invalid due to network error, print network error
+        else:
+            return http_response # Return http response if request was successful
     
     def clean_response(self, http_response):
-        decoded_http_response = http_response.read().decode('utf-8') # Decode response from bytes to str
-        json_data = json.loads(decoded_http_response) # Turn decoded response into list or dict object
-        return json_data
+        if http_response is None: # Exit function is http_response is empty
+            return 
+        try:
+            decoded_http_response = http_response.read().decode('utf-8') # Decode response from bytes to str
+        except json.JSONDecodeError as j: # Raise json decode exception if json format is invalid
+            print(j.msg)
+        else:
+            json_data = json.loads(decoded_http_response) # Turn decoded response into list or dict object
+            return json_data
     
     def response_to_json(self, json_data):
+        if json_data is None: # Exit function if json_data is empty
+            return
         with open(self.file_path, "w") as json_file: # write fetched api data to json file
             json.dump(json_data, json_file, indent = 4)
+            print("Data successfully retrieved and saved!")
     
     def call_api(self): # Call and run all functions to get data from api and save it
         updated_api_url = self.parse_api_url()
         http_response = self.send_request(updated_api_url)
         json_data = self.clean_response(http_response)
         self.response_to_json(json_data)
-        print("Data successfully retrieved and saved!")
