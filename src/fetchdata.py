@@ -16,6 +16,12 @@ token_header = {"Authorization": f'token {token}'}
 
 github_api = APICall(user_name, token, token_header, api_url)
 
-github_api.call_api()
+diff_events = github_api.call_api()
+
+print(diff_events)
+
+
+
+
 
 
