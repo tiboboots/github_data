@@ -38,6 +38,13 @@ class APICall:
         else:
             json_data = json.loads(decoded_http_response) # Turn decoded response into list or dict object
             return json_data
+        
+    def filter_events(self, json_data):
+        diff_events = dict()
+        for dictionary in json_data:
+            diff_events[dictionary['id']] = [dictionary['type'], dictionary['repo']['name']]
+            # Uses id field from json response as key, value is a list containing event type and repo name
+        return diff_events
     
     def response_to_json(self, json_data):
         if json_data is None: # Exit function if json_data is empty
@@ -50,4 +57,12 @@ class APICall:
         updated_api_url = self.parse_api_url()
         http_response = self.send_request(updated_api_url)
         json_data = self.clean_response(http_response)
+        diff_events = self.filter_events(json_data)
         self.response_to_json(json_data)
+        return diff_events # Return dictionary of event id's, event names, and event repo's
+
+    
+   
+    
+
+
