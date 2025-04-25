@@ -37,4 +37,3 @@ class APICall:
         json_data = self.clean_response(http_response)
         self.response_to_json(json_data)
         print("Data successfully retrieved and saved!")
-        
