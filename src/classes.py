@@ -66,9 +66,8 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
         updated_api_url = self.parse_api_url()
         http_response = self.send_request(updated_api_url)
         json_data = self.clean_response(http_response)
-        diff_events = self.filter_events(json_data)
         self.response_to_json(json_data)
-        return diff_events # Return dictionary of event id's, event names, and event repo's 
+        return json_data
 
     
    
