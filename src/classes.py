@@ -1,13 +1,22 @@
 import json
 from urllib import request, parse, error
+from dotenv import load_dotenv
+import os
 
-class APICall:
-    def __init__(self, user_name, token, token_header, api_url):
+load_dotenv() # Load environment variables from .env file
+
+file_path = "api_response.json"
+
+class APIDetails: # Class for grouped api data together as attributes
+    def __init__(self):
+        self.token = os.getenv("GITHUB_TOKEN")
+        self.token_header = {"Authorization": f'token {self.token}'}
+        self.api_url = "https://api.github.com/users/<username>/events"
+
+class APICall(APIDetails): # Inherits attributes from APIDetails parent class
+    def __init__(self, user_name):
+        super().__init__()
         self.user_name = user_name
-        self.token = token
-        self.token_header = token_header
-        self.api_url = api_url
-        self.file_path = "api_response.json"
 
     def parse_api_url(self):
         parsed_api = parse.urlparse(self.api_url) # parses api_url into tuple object
@@ -49,7 +58,7 @@ class APICall:
     def response_to_json(self, json_data):
         if json_data is None: # Exit function if json_data is empty
             return
-        with open(self.file_path, "w") as json_file: # write fetched api data to json file
+        with open(file_path, "w") as json_file: # write fetched api data to json file
             json.dump(json_data, json_file, indent = 4)
             print("Data successfully retrieved and saved!")
     
@@ -59,7 +68,7 @@ class APICall:
         json_data = self.clean_response(http_response)
         diff_events = self.filter_events(json_data)
         self.response_to_json(json_data)
-        return diff_events # Return dictionary of event id's, event names, and event repo's
+        return diff_events # Return dictionary of event id's, event names, and event repo's 
 
     
    
