@@ -1,27 +1,12 @@
-import json
-import os
-from dotenv import load_dotenv
-from urllib import request, parse, error
-from classes import APICall
-
-load_dotenv() # Load environment variables from .env file
+from classes import APIDetails, APICall
 
 user_name = input("Enter your github username: ")
 
-api_url = "https://api.github.com/users/<username>/events"
+api_details = APIDetails() # Create instance of APIDetails class containing constant api variables/data
 
-token = os.getenv("GITHUB_TOKEN") # use os.getenv() method to get value of token environment variable
+api_instance = APICall(user_name) # Pass user input as argument/value of user_name attribute in APICall
 
-token_header = {"Authorization": f'token {token}'}
+http_response = api_instance.call_api() # Send request, get response, save response, with the call_api() method
 
-github_api = APICall(user_name, token, token_header, api_url)
-
-diff_events = github_api.call_api()
-
-print(diff_events)
-
-
-
-
-
+user_events = api_instance.filter_events(http_response) # Return dicitonary with user events, using response
 
