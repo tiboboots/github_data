@@ -72,6 +72,19 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
                             nested_dict[event] += 1
         return diff_events
     
+    def return_events(self, diff_events):
+    # Return event message to user based on event type
+        for repo, event_dict in diff_events.items():
+            for event, count in event_dict.items():
+                if event == "PushEvent" and count > 0:
+                    print(f'{self.user_name} pushed {count} commits to: {repo}')
+                elif event == "CreateEvent" and count > 0:
+                    print(f'{self.user_name} created {count} branches in {repo}.')
+                elif event == "DeleteEvent" and count > 0:
+                    print(f'{self.user_name} deleted {count} branches in {repo}.')
+                elif event == "PublicEvent" and count > 0:
+                    print(f'{self.user_name} made {repo} public.')
+            
     def response_to_json(self, json_data):
         if json_data is None: # Exit function if json_data is empty
             return
