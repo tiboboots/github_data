@@ -49,10 +49,27 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
             return json_data
         
     def filter_events(self, json_data):
-        diff_events = dict()
+        # Create diff_events dictionary with repo name as key, and initialize with empty dictionary
+        diff_events = {dic['repo']['name']: dict() for dic in json_data}
         for dictionary in json_data:
-            diff_events[dictionary['id']] = [dictionary['type'], dictionary['repo']['name']]
-            # Uses id field from json response as key, value is a list containing event type and repo name
+            for empty_dict in diff_events.values():
+                # Create event type keys in empty nested dictionary, with initial value of 0
+                empty_dict[dictionary['type']] = 0
+        return diff_events
+    
+    def count_events(self, json_data, diff_events):
+        for repo, nested_dict in diff_events.items(): # iterate over each key-value pair and return as object
+            for dictionary in json_data:
+                # Check if current dictionary's repo name equals the repo key in diff_event
+                # and if the dictionary's event type exists in the nested dictionary's keys of diff_events
+                if dictionary['repo']['name'] == repo and dictionary['type'] in nested_dict.keys():
+                    # If true, then iterate over each key in nested dictionary
+                    for event in nested_dict.keys():
+                        if dictionary['type'] == event:
+                            # When match between dictionary event type and nested dictionary event key is found
+                            # add 1 to the nested dictionary's event key's value
+                            # since this means that that specific event took place in the repo
+                            nested_dict[event] += 1
         return diff_events
     
     def response_to_json(self, json_data):
@@ -68,6 +85,8 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
         json_data = self.clean_response(http_response)
         self.response_to_json(json_data)
         return json_data
+    
+
 
     
    
