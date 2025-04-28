@@ -7,25 +7,31 @@ load_dotenv() # Load environment variables from .env file
 
 file_path = "api_response.json"
 
-class APIDetails: # Class for grouped api data together as attributes
+class APIDetails: # Class for grouping constant api data together as attributes
     def __init__(self):
         self.token = os.getenv("GITHUB_TOKEN")
         self.token_header = {"Authorization": f'token {self.token}'}
-        self.api_url = "https://api.github.com/users/<username>/events"
+        self.api_url = "https://api.github.com/users/<username>/events?page"
 
 class APICall(APIDetails): # Inherits attributes from APIDetails parent class
-    def __init__(self, user_name):
+    def __init__(self, user_name, api_page):
         super().__init__()
         self.user_name = user_name
+        self.api_page = api_page
 
     def parse_api_url(self):
         parsed_api = parse.urlparse(self.api_url) # parses api_url into tuple object
+        
         url_path = parsed_api.path # Extract path from api tuple using path property method
+        url_page = parsed_api.query # Extract page from query parameter
+        
+        updated_page = url_page.replace(url_page, self.api_page) # Update path with page input
         updated_path = url_path.replace("<username>", self.user_name) # Update path with user_name input
-        updated_parsed_api = parsed_api._replace(path = updated_path) # Replace old path in tuple with new path
+
+        updated_parsed_api = parsed_api._replace(path = updated_path, query = updated_page) # Replace old path in tuple with new path
         updated_api_url = parse.urlunparse(updated_parsed_api) # Undo parsing on updated url, returns a new, full url
         return updated_api_url
-    
+
     def send_request(self, updated_api_url):
         http_request = request.Request(url = updated_api_url , headers = self.token_header)
         try:
