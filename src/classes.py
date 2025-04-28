@@ -70,19 +70,20 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
             # Add PullRequestEvent as key to nested dictionary in events_dict dictionary
         return events_dict
     
-    def count_events(self, json_data, events_dict):
-        for repo, nested_dict in events_dict.items(): # iterate over each key-value pair and return as object
-            for dictionary in json_data:
-                # Check if current dictionary's repo name equals the repo key in diff_event
-                # and if the dictionary's event type exists in the nested dictionary's keys of diff_events
-                if dictionary['repo']['name'] == repo and dictionary['type'] in nested_dict.keys():
-                    # If true, then iterate over each key in nested dictionary
-                    for event in nested_dict.keys():
-                        if dictionary['type'] == event:
-                            # When match between dictionary event type and nested dictionary event key is found
-                            # add 1 to the nested dictionary's event key's value
-                            # since this means that that specific event took place in the repo
-                            nested_dict[event] += 1
+    def init_and_count_events(self, json_data):
+        events_dict = self.init_all_events(json_data)
+        for dictionary in json_data:
+            if dictionary['type'] == "PullRequestEvent":
+                continue # Skip dictionary if event type is equal to PullRequestEvent
+            for repo, nested_dict in events_dict.items():
+                if dictionary['repo']['name'] != repo or dictionary['type'] not in nested_dict.keys():
+                    # Skip dictionary if repo name does not match repo key in event_dict
+                    # or if dictionary event type is not a key in nested_dict keys
+                    continue 
+                # If event type is not PullRequestEvent, and dictionary repo name equals repo key in event_dict,
+                # and dictionary event type exists as key within nested_dict, 
+                # then access that event type's matching key in nested_dict and add 1 to it's value
+                nested_dict[dictionary['type']] += 1 
         return events_dict                 
 
     def response_to_json(self, json_data):
