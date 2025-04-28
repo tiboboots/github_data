@@ -48,17 +48,30 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
             json_data = json.loads(decoded_http_response) # Turn decoded response into list or dict object
             return json_data
         
-    def filter_events(self, json_data):
-        # Create diff_events dictionary with repo name as key, and initialize with empty dictionary
-        diff_events = {dic['repo']['name']: dict() for dic in json_data}
+    def init_events_dict(self, json_data):
+        # Create events_dict dictionary with repo name as key, and initialize with empty dictionary
+        events_dict = {dic['repo']['name']: dict() for dic in json_data}
         for dictionary in json_data:
-            for empty_dict in diff_events.values():
+            if dictionary['type'] == "PullRequestEvent":
+                continue # if event type is pull requeste event, then skip
+            for empty_dict in events_dict.values():
                 # Create event type keys in empty nested dictionary, with initial value of 0
+                # if event type is not PullRequestEvent
                 empty_dict[dictionary['type']] = 0
-        return diff_events
+        return events_dict # Looks like: {'tiboboots/github_data': {'PushEvent': 0, 'CreateEvent': 0}
     
-    def count_events(self, json_data, diff_events):
-        for repo, nested_dict in diff_events.items(): # iterate over each key-value pair and return as object
+    def init_all_events(self, json_data):
+        events_dict = self.init_events_dict(json_data) # Initialize events dictionary using init_events_dict method
+        for dictionary in json_data:
+            if dictionary['type'] != "PullRequestEvent":
+                continue # Skip non pull requests events
+            for nested_dict in events_dict.values():
+                nested_dict[dictionary['type']] = dict() 
+            # Add PullRequestEvent as key to nested dictionary in events_dict dictionary
+        return events_dict
+    
+    def count_events(self, json_data, events_dict):
+        for repo, nested_dict in events_dict.items(): # iterate over each key-value pair and return as object
             for dictionary in json_data:
                 # Check if current dictionary's repo name equals the repo key in diff_event
                 # and if the dictionary's event type exists in the nested dictionary's keys of diff_events
@@ -70,21 +83,8 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
                             # add 1 to the nested dictionary's event key's value
                             # since this means that that specific event took place in the repo
                             nested_dict[event] += 1
-        return diff_events
-    
-    def return_events(self, diff_events):
-    # Return event message to user based on event type
-        for repo, event_dict in diff_events.items():
-            for event, count in event_dict.items():
-                if event == "PushEvent" and count > 0:
-                    print(f'{self.user_name} pushed {count} commits to: {repo}')
-                elif event == "CreateEvent" and count > 0:
-                    print(f'{self.user_name} created {count} branches in {repo}.')
-                elif event == "DeleteEvent" and count > 0:
-                    print(f'{self.user_name} deleted {count} branches in {repo}.')
-                elif event == "PublicEvent" and count > 0:
-                    print(f'{self.user_name} made {repo} public.')
-            
+        return events_dict                 
+
     def response_to_json(self, json_data):
         if json_data is None: # Exit function if json_data is empty
             return
