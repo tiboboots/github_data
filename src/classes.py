@@ -114,6 +114,14 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
                 # since that action for the pull request event occured in the repository again
                 pr_dict[pr_action] += 1
         return events_dict
+    
+    def get_repo_events(self, http_response):
+        # Main method to call all event dictionary related methods, 
+        # instead of having to call them individually
+        repo_events_init = self.create_events_dict(http_response)
+        repo_events_counted = self.count_events(http_response, repo_events_init)
+        repo_events = self.add_pr_actions(http_response, repo_events_counted)
+        return repo_events
 
     def response_to_json(self, json_data):
         if json_data is None: # Exit function if json_data is empty
