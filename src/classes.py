@@ -102,9 +102,12 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
                         # then check to see if pull request event action is not yet in it's dictionary value
                         event_value[pr_action] = 1
                         # If pull request action does not yet exist in key dictionary,
-                        # then add it with the initial value of 1, since it occured in repo
+                        # then add it with the initial value of 1, since it occured in the repo
+                    else:
+                        # if pull request action does already exist within the dictionary, 
+                        # then increment it by 1, since it occured in the repo, but already exists
+                        event_value[pr_action] += 1
         return events_dict # return updated events_dict dictionary
-
 
     
     def response_to_json(self, json_data):
