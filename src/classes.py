@@ -80,8 +80,33 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
                 # and dictionary event type exists as key within nested_dict, 
                 # then access that event type's matching key in nested_dict and add 1 to it's value
                 nested_dict[dictionary['type']] += 1 
-        return events_dict                 
+        return events_dict
+    
+    def add_pull_request_actions(self, http_response, events_dict):
+        for dictionary in http_response:
+            if dictionary['type'] != "PullRequestEvent":
+                continue # skip dictionary if event type is not pull request event
+            event_repo = dictionary['repo']['name']
+            pr_action = dictionary['payload']['action']
+            # if dictionary event type is pull request event, then save repo name and pull request action
+            for repo, nested_dict in events_dict.items():
+                if event_repo != repo:
+                    # skip repo key in events_dict if it does match current pull request event repo
+                    continue
+                for event, event_value in nested_dict.items():
+                    if event != "PullRequestEvent":
+                        # skip event key in nested dictionary if it is not equal to pull request event
+                        continue
+                    if pr_action not in event_value.keys():
+                        # If event key is pull request event, 
+                        # then check to see if pull request event action is not yet in it's dictionary value
+                        event_value[pr_action] = 1
+                        # If pull request action does not yet exist in key dictionary,
+                        # then add it with the initial value of 1, since it occured in repo
+        return events_dict # return updated events_dict dictionary
 
+
+    
     def response_to_json(self, json_data):
         if json_data is None: # Exit function if json_data is empty
             return
@@ -92,6 +117,5 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
     def call_api(self): # Call and run all functions to get data from api and save it
         api_url = self.parse_api_url()
         http_response = self.send_request(api_url)
-        cleaned_http_response = self.clean_response(http_response)
-        self.response_to_json(cleaned_http_response) # Write response to json file    
+        cleaned_http_response = self.clean_response(http_response) 
         return cleaned_http_response   
