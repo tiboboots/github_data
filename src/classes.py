@@ -54,31 +54,22 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
             json_data = json.loads(decoded_http_response) # Turn decoded response into list or dict object
             return json_data
         
-    def init_events_dict(self, json_data):
+    def create_events_dict(self, json_data):
         # Create events_dict dictionary with repo name as key, and initialize with empty dictionary
         events_dict = {dic['repo']['name']: dict() for dic in json_data}
         for dictionary in json_data:
-            if dictionary['type'] == "PullRequestEvent":
-                continue # if event type is pull requeste event, then skip
-            for empty_dict in events_dict.values():
-                # Create event type keys in empty nested dictionary, with initial value of 0
-                # if event type is not PullRequestEvent
-                empty_dict[dictionary['type']] = 0
-        return events_dict # Looks like: {'tiboboots/github_data': {'PushEvent': 0, 'CreateEvent': 0}
-    
-    def init_all_events(self, json_data):
-        events_dict = self.init_events_dict(json_data) # Initialize events dictionary using init_events_dict method
-        for dictionary in json_data:
-            if dictionary['type'] != "PullRequestEvent":
-                continue # Skip non pull requests events
-            for nested_dict in events_dict.values():
-                nested_dict[dictionary['type']] = dict() 
-            # Add PullRequestEvent as key to nested dictionary in events_dict dictionary
+            event_type = dictionary['type']
+            if event_type != "PullRequestEvent":
+                for nested_dict in events_dict.values():
+                    nested_dict[event_type] = 0
+            else:
+                for nested_dict in events_dict.values():
+                    nested_dict[event_type] = dict()
         return events_dict
     
-    def init_and_count_events(self, json_data):
-        events_dict = self.init_all_events(json_data)
-        for dictionary in json_data:
+    def init_and_count_events(self, http_response):
+        events_dict = self.create_events_dict(http_response)
+        for dictionary in http_response:
             if dictionary['type'] == "PullRequestEvent":
                 continue # Skip dictionary if event type is equal to PullRequestEvent
             for repo, nested_dict in events_dict.items():
