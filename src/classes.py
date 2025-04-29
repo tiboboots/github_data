@@ -91,16 +91,8 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
             print("Data successfully retrieved and saved!")
     
     def call_api(self): # Call and run all functions to get data from api and save it
-        updated_api_url = self.parse_api_url()
-        http_response = self.send_request(updated_api_url)
-        json_data = self.clean_response(http_response)
-        self.response_to_json(json_data)
-        return json_data
-    
-
-
-    
-   
-    
-
-
+        api_url = self.parse_api_url()
+        http_response = self.send_request(api_url)
+        cleaned_http_response = self.clean_response(http_response)
+        self.response_to_json(cleaned_http_response) # Write response to json file    
+        return cleaned_http_response   
