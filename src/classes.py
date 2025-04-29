@@ -82,34 +82,39 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
                 nested_dict[dictionary['type']] += 1 
         return events_dict
     
-    def add_pull_request_actions(self, http_response, events_dict):
+    def add_pr_actions(self, http_response, events_dict):
         for dictionary in http_response:
             if dictionary['type'] != "PullRequestEvent":
                 continue # skip dictionary if event type is not pull request event
+            event_type = dictionary['type']
             event_repo = dictionary['repo']['name']
             pr_action = dictionary['payload']['action']
-            # if dictionary event type is pull request event, then save repo name and pull request action
-            for repo, nested_dict in events_dict.items():
-                if event_repo != repo:
-                    # skip repo key in events_dict if it does match current pull request event repo
-                    continue
-                for event, event_value in nested_dict.items():
-                    if event != "PullRequestEvent":
-                        # skip event key in nested dictionary if it is not equal to pull request event
-                        continue
-                    if pr_action not in event_value.keys():
-                        # If event key is pull request event, 
-                        # then check to see if pull request event action is not yet in it's dictionary value
-                        event_value[pr_action] = 1
-                        # If pull request action does not yet exist in key dictionary,
-                        # then add it with the initial value of 1, since it occured in the repo
-                    else:
-                        # if pull request action does already exist within the dictionary, 
-                        # then increment it by 1, since it occured in the repo, but already exists
-                        event_value[pr_action] += 1
-        return events_dict # return updated events_dict dictionary
+            # if dictionary event type is pull request event, then save repo name, pr action, and event type
+            if event_repo not in events_dict.keys():
+                # Skip dictionary if event repo not found as key in events_dict
+                continue 
+            # If event repository does exist within events_dict as a key,
+            # then return that key's value, which is a dictionary, and save it to repo_dict
+            repo_dict = events_dict.get(event_repo)
+            if event_type not in repo_dict.keys():
+                # Skip dictionary if event type not found as an event key within the repo's dictionary
+                continue
+            # If the event type exists as a key within repository dictionary keys,
+            # then return that event key's value and save it as the pr_dict variable,
+            # since the event type should be pullrequestevent, with a dictionary as it's value
+            pr_dict = repo_dict.get(event_type)
+            if pr_action not in pr_dict.keys():
+                # If the pull request action does not yet exist as a key within the pr dictionary,
+                # then add it as a key with the initial value of 1,
+                # since that action for the pull request event occured within the repository
+                pr_dict[pr_action] = 1
+            else:
+                # If the pull request action does already exist as a key within the pr dictionary,
+                # then increment it's value by 1, 
+                # since that action for the pull request event occured in the repository again
+                pr_dict[pr_action] += 1
+        return events_dict
 
-    
     def response_to_json(self, json_data):
         if json_data is None: # Exit function if json_data is empty
             return
