@@ -67,8 +67,7 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
                     nested_dict[event_type] = dict()
         return events_dict
     
-    def count_events(self, http_response):
-        events_dict = self.create_events_dict(http_response)
+    def count_events(self, http_response, events_dict):
         for dictionary in http_response:
             if dictionary['type'] == "PullRequestEvent":
                 continue # Skip dictionary if event type is equal to PullRequestEvent
