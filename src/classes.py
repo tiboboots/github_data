@@ -11,6 +11,8 @@ class APIDetails: # Class for grouping constant api data together as attributes
         self.token_header = {"Authorization": f'token {self.token}'}
         self.api_url = "https://api.github.com/users/<username>/events?page"
         self.file_path = "api_response.json"
+        self.old_events_path = "old_events_dict.json"
+        self.new_events_path = "new_events_dict.json"
 
 class APICall(APIDetails): # Inherits attributes from APIDetails parent class
     def __init__(self, user_name, api_page):
