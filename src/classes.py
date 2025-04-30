@@ -5,13 +5,12 @@ import os
 
 load_dotenv() # Load environment variables from .env file
 
-file_path = "api_response.json"
-
 class APIDetails: # Class for grouping constant api data together as attributes
     def __init__(self):
         self.token = os.getenv("GITHUB_TOKEN")
         self.token_header = {"Authorization": f'token {self.token}'}
         self.api_url = "https://api.github.com/users/<username>/events?page"
+        self.file_path = "api_response.json"
 
 class APICall(APIDetails): # Inherits attributes from APIDetails parent class
     def __init__(self, user_name, api_page):
@@ -126,7 +125,7 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
     def response_to_json(self, json_data):
         if json_data is None: # Exit function if json_data is empty
             return
-        with open(file_path, "w") as json_file: # write fetched api data to json file
+        with open(self.file_path, "w") as json_file: # write fetched api data to json file
             json.dump(json_data, json_file, indent = 4)
             print("Data successfully retrieved and saved!")
     
@@ -134,4 +133,5 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
         api_url = self.parse_api_url()
         http_response = self.send_request(api_url)
         cleaned_http_response = self.clean_response(http_response) 
-        return cleaned_http_response   
+        return cleaned_http_response
+    
