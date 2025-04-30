@@ -126,10 +126,18 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
     
     def new_repo_events_to_json(self, repo_events):
         with open(self.new_events_path, "w") as events_json:
-            repo_events = json.loads(repo_events) # turn events dictionary into list object
             json.dump(repo_events, events_json, indent = 4)
-            print("Repo events successfully saved!")
+            print("New repo events successfully saved!")
 
+    def old_repo_events_to_json(self):
+        if os.path.getsize(self.new_events_path) != 0 and os.path.exists(self.new_events_path):
+            # load events data from new_events json file if file exists and is not empty
+            with open(self.new_events_path, "r") as new_events_json:
+                old_events = json.load(new_events_json) # save new events to old_events
+            with open(self.old_events_path, "w") as old_events_json:
+                json.dump(old_events, old_events_json) # write old events to json
+                print("Successfully extracted new events and saved them as old events to new json file.")
+            
     def response_to_json(self, json_data):
         if json_data is None: # Exit function if json_data is empty
             return
