@@ -124,22 +124,60 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
         repo_events = self.add_pr_actions(http_response, repo_events_counted)
         return repo_events
     
-    def new_repo_events_to_json(self, repo_events):
+    def new_events_to_json(self, repo_events):
         # write new repo events to json file
         with open(self.new_events_path, "w") as events_json:
             json.dump(repo_events, events_json, indent = 4)
             print("New repo events successfully saved!")
 
-    def old_repo_events_to_json(self):
+    def old_events_to_json(self):
         with open(self.new_events_path, "r") as new_events_json:
-            old_events = json.load(new_events_json) # extract new repo events and save them to old_events
+            new_events = json.load(new_events_json) # extract new repo events and save them to new_events
         with open(self.old_events_path, "w") as old_events_json:
-            json.dump(old_events, old_events_json, indent = 4) # write extracted new repo events to old_events json file
+            json.dump(new_events, old_events_json, indent = 4) # write extracted new repo events to old_events json file
             print("Successfully extracted new events and saved them as old events to new json file.")
-
+            
     def repo_events_to_json(self, repo_events):
-        self.new_repo_events_to_json(repo_events)
-        self.old_repo_events_to_json()
+        self.new_events_to_json(repo_events)
+        self.old_events_to_json()
+
+    def check_new_events(self):
+        with open(self.old_events_path, "r") as old_events_json:
+            old_events = json.load(old_events_json)
+        with open(self.new_events_path, "r") as new_events_json:
+            new_events = json.load(new_events_json)
+
+        for repo in new_events.keys():
+            repo_name = repo
+            new_events_dict = new_events.get(repo) # Get dictionary containing events for each repo
+            if repo_name not in old_events.keys():
+                # Skip repo if repo key from new version of the events dictionary,
+                # does not exist as a repo key in the old version of the events dictionary
+                continue
+            old_events_dict = old_events.get(repo_name) # If repo exists, then get it's events dictionary
+            for event in new_events_dict.keys():
+                if event == "PullRequestEvent":
+                    continue # Skip event key if it equals pull request event
+                if event not in old_events_dict.keys():
+                    # Skip event if event key from new version of events dictionary does not exist,
+                    # as a key in the old version of the events dictionary
+                    continue
+                # If event key from new_events repo dictionary exists as key in old_events repo dictionary,
+                # then get that key's value, which is the count of that event in that repository
+                new_count = new_events_dict.get(event) # Get new count for current event
+                old_count = old_events_dict.get(event) # Get old count for current event
+                if new_count > old_count:
+                    # Check if the count of the event in the new version of the events dictionary,
+                    # is higher than the count of the same event in the old version of the events dictionary
+                    # If true, then subtract new count with old count to get difference,
+                    # which is the total amount of new occurences for that event in it's repository
+                    new_event_count = new_count - old_count
+                    print(f'{new_event_count} new {event}s in {repo_name}')
+                else:
+                    # If new count is not higher than old count, 
+                    # then no new occurences of that event happened
+                    print(f'No new {event}s in {repo_name}')
+
             
     def response_to_json(self, json_data):
         if json_data is None: # Exit function if json_data is empty
