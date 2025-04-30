@@ -123,6 +123,12 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
         repo_events_counted = self.count_events(http_response, repo_events_init)
         repo_events = self.add_pr_actions(http_response, repo_events_counted)
         return repo_events
+    
+    def new_repo_events_to_json(self, repo_events):
+        with open(self.new_events_path, "w") as events_json:
+            repo_events = json.loads(repo_events) # turn events dictionary into list object
+            json.dump(repo_events, events_json, indent = 4)
+            print("Repo events successfully saved!")
 
     def response_to_json(self, json_data):
         if json_data is None: # Exit function if json_data is empty
