@@ -124,28 +124,28 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
         repo_events = self.add_pr_actions(http_response, repo_events_counted)
         return repo_events
     
-    def new_events_to_json(self, repo_events):
+    def events_to_json(self, repo_events):
         # write new repo events to json file
         with open(self.new_events_path, "w") as events_json:
             json.dump(repo_events, events_json, indent = 4)
             print("New repo events successfully saved!")
-
-    def old_events_to_json(self):
-        with open(self.new_events_path, "r") as new_events_json:
-            new_events = json.load(new_events_json) # extract new repo events and save them to new_events
-        with open(self.old_events_path, "w") as old_events_json:
-            json.dump(new_events, old_events_json, indent = 4) # write extracted new repo events to old_events json file
-            print("Successfully extracted new events and saved them as old events to new json file.")
             
-    def repo_events_to_json(self, repo_events):
-        self.new_events_to_json(repo_events)
-        self.old_events_to_json()
+    def load_old_events(self):
+        # Load data from events json and return as old_events
+        with open(self.new_events_path, "r") as events_json:
+            old_events = json.load(events_json)
+        return old_events
 
-    def check_new_events(self):
-        with open(self.old_events_path, "r") as old_events_json:
-            old_events = json.load(old_events_json)
-        with open(self.new_events_path, "r") as new_events_json:
-            new_events = json.load(new_events_json)
+    def load_new_events(self):
+        # Load data from events json and return as new_events
+        with open(self.new_events_path, "r") as events_json:
+            new_events = json.load(events_json)
+        return new_events
+
+    def check_new_events(self, repo_events):
+        old_events = self.load_old_events() # Get previous version of events before new events are written to json file
+        self.events_to_json(repo_events) # Write new events to new_events_dict.json file
+        new_events = self.load_new_events() # Get new version of the events dictionary from the json file
 
         for repo in new_events.keys():
             repo_name = repo
@@ -177,7 +177,6 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
                     # If new count is not higher than old count, 
                     # then no new occurences of that event happened
                     print(f'No new {event}s in {repo_name}')
-
             
     def response_to_json(self, json_data):
         if json_data is None: # Exit function if json_data is empty
