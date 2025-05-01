@@ -178,11 +178,11 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
                     # then no new occurences of that event happened
                     print(f'No new {event}s in {repo_name}')
             
-    def response_to_json(self, json_data):
-        if json_data is None: # Exit function if json_data is empty
+    def response_to_json(self, http_response):
+        if http_response is None: # Exit function if http_response is empty
             return
         with open(self.file_path, "w") as json_file: # write fetched api data to json file
-            json.dump(json_data, json_file, indent = 4)
+            json.dump(http_response, json_file, indent = 4)
             print("Data successfully retrieved and saved!")
     
     def call_api(self): # Call and run all functions to get data from api and save it
