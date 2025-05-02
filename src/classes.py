@@ -187,22 +187,40 @@ class EventHandling(APIDetails):
                     repo_events[repo_name][event] = new_event_count # Update event value to equal count_status
         return repo_events 
     
-    def fetch_repo_event_status(self, repo_events):
+    def fetch_pr_event_status(self, new_events):
+        # Checks pull request actions to see if any new pull requests were made in the repository
+        for repo, event_dict in new_events.items():
+            pr_zero_status = True
+            for event in event_dict.keys():
+                if event != "PullRequestEvent":
+                    continue
+                pr_dict = event_dict.get(event)
+                for action, count in pr_dict.items():
+                    if count != 0:
+                        pr_zero_status = False
+                        print(f'{action} {count} new pull requests in {repo}')
+                        return pr_zero_status
+            if pr_zero_status == True:
+                return pr_zero_status
+    
+    def fetch_repo_event_status(self, new_events):
         # Method to check whether any new event's have occured in a repository
-        for repo, event_dict in repo_events.items():
+        for repo, event_dict in new_events.items():
             zero_event_status = True # Set zero_event_status flag to be True for each repository
             for event in event_dict.keys():
                 event_count = event_dict.get(event)
                 if event == "PullRequestEvent":
-                    continue # Skip event if equal to pull request event, since these event's need to be processed differently
-                if event_count != 0:
+                    # If event is equal to pull request event, then call fetch_pr method to check pull request event,
+                    # since pull requests need to be processed differently due to them having a dictionary as their value
+                    # containing the count of various actions for a pull request
+                    pr_zero_status = self.fetch_pr_event_status(new_events)
+                elif event_count != 0:
                     # If event's count/value is not equal to 0,
                     # then tell user how many new occurences of that event happened in it's repository
                     # Also set zero_event_status to be False for the current repository if any event has a non-zero count
                     zero_event_status = False 
                     print(f"- {event_count} new {event}s in {repo}")
-            if zero_event_status == True:
+            if zero_event_status == True and pr_zero_status == True:
                  # If zero_event_status for current repo is still True after iterating over all events,
                  # then no new occurences for any events happened in that repo, which we tell the user
                 print(f"- No new events in {repo}")
-
