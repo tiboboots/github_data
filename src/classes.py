@@ -130,22 +130,16 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
             json.dump(repo_events, events_json, indent = 4)
             print("Repo events successfully saved!")
             
-    def load_old_events(self):
+    def load_events(self):
         # Load data from events json and return as old_events
         with open(self.new_events_path, "r") as events_json:
-            old_events = json.load(events_json)
-        return old_events
-
-    def load_new_events(self):
-        # Load data from events json and return as new_events
-        with open(self.new_events_path, "r") as events_json:
-            new_events = json.load(events_json)
-        return new_events
+            all_events = json.load(events_json)
+        return all_events
 
     def check_new_events(self, repo_events):
-        old_events = self.load_old_events() # Get previous version of events before new events are written to json file
+        old_events = self.load_events() # Get previous version of events before new events are written to json file
         self.events_to_json(repo_events) # Write new events to new_events_dict.json file
-        new_events = self.load_new_events() # Get new version of the events dictionary from the json file
+        new_events = self.load_events() # Get new version of the events dictionary from the json file
 
         for repo in new_events.keys():
             repo_name = repo
