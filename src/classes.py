@@ -166,31 +166,32 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
                     # If true, then subtract new count with old count to get difference,
                     # which is the total amount of new occurences for that event in it's repository
                     new_event_count = new_count - old_count
-                    count_status = f'{new_event_count}'
-                    repo_events[repo_name][event] = count_status # Update event value to equal count_status
+                    repo_events[repo_name][event] = new_event_count # Update event value to equal count_status
                 else:
                     # If new count is not higher than old count, 
                     # then no new occurences of that event happened
-                    count_status = 0
-                    repo_events[repo_name][event] = count_status # Update event value to equal count_status
+                    new_event_count = 0
+                    repo_events[repo_name][event] = new_event_count # Update event value to equal count_status
         return repo_events 
     
-    def repo_event_status(self, repo_events):
+    def fetch_repo_event_status(self, repo_events):
         # Method to check whether any new event's have occured in a repository
-        repo_event_count = 0
         for repo, event_dict in repo_events.items():
+            zero_event_status = True # Set zero_event_status flag to be True for each repository
             for event in event_dict.keys():
+                event_count = event_dict.get(event)
                 if event == "PullRequestEvent":
                     continue # Skip event if equal to pull request event, since these event's need to be processed differently
-                if event_dict.get(event) != 0:
-                    # If the event's value is not equal to 0, then add it's value with repo_event_count,
-                    # since the event's value/count is 1 or greater
-                    repo_event_count += event_dict.get(event)
-                    print(f"{repo_event_count} new events in {repo}")
-            else:
-                # If above condition never returns true even once, then tell user that no new event's have occured in that repo,
-                # since all event's will have a value of 0 
-                print(f'No new events in {repo}')
+                if event_count != 0:
+                    # If event's count/value is not equal to 0,
+                    # then tell user how many new occurences of that event happened in it's repository
+                    # Also set zero_event_status to be False for the current repository if any event has a non-zero count
+                    zero_event_status = False 
+                    print(f"- {event_count} new {event}s in {repo}")
+            if zero_event_status == True:
+                 # If zero_event_status for current repo is still True after iterating over all events,
+                 # then no new occurences for any events happened in that repo, which we tell the user
+                print(f"- No new events in {repo}")
     
     def response_to_json(self, http_response):
         if http_response is None: # Exit function if http_response is empty
