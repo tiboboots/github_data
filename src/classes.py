@@ -11,7 +11,6 @@ class APIDetails: # Class for grouping constant api data together as attributes
         self.token_header = {"Authorization": f'token {self.token}'}
         self.api_url = "https://api.github.com/users/<username>/events?page"
         self.file_path = "api_response.json"
-        self.old_events_path = "old_events_dict.json"
         self.new_events_path = "new_events_dict.json"
 
 class APICall(APIDetails): # Inherits attributes from APIDetails parent class
@@ -54,7 +53,21 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
         else:
             json_data = json.loads(decoded_http_response) # Turn decoded response into list or dict object
             return json_data
-        
+
+    def response_to_json(self, http_response):
+        if http_response is None: # Exit function if http_response is empty
+            return
+        with open(self.file_path, "w") as json_file: # write fetched api data to json file
+            json.dump(http_response, json_file, indent = 4)
+            print("Data successfully retrieved and saved!")
+    
+    def call_api(self): # Call and run all functions to get data from api and save it
+        api_url = self.parse_api_url()
+        http_response = self.send_request(api_url)
+        cleaned_http_response = self.clean_response(http_response) 
+        return cleaned_http_response
+    
+class EventHandling(APIDetails):
     def create_events_dict(self, json_data):
         # Create events_dict dictionary with repo name as key, and initialize with empty dictionary
         events_dict = {dic['repo']['name']: dict() for dic in json_data}
@@ -192,17 +205,4 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
                  # If zero_event_status for current repo is still True after iterating over all events,
                  # then no new occurences for any events happened in that repo, which we tell the user
                 print(f"- No new events in {repo}")
-    
-    def response_to_json(self, http_response):
-        if http_response is None: # Exit function if http_response is empty
-            return
-        with open(self.file_path, "w") as json_file: # write fetched api data to json file
-            json.dump(http_response, json_file, indent = 4)
-            print("Data successfully retrieved and saved!")
-    
-    def call_api(self): # Call and run all functions to get data from api and save it
-        api_url = self.parse_api_url()
-        http_response = self.send_request(api_url)
-        cleaned_http_response = self.clean_response(http_response) 
-        return cleaned_http_response
-    
+
