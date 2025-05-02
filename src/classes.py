@@ -128,7 +128,7 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
         # write new repo events to json file
         with open(self.new_events_path, "w") as events_json:
             json.dump(repo_events, events_json, indent = 4)
-            print("New repo events successfully saved!")
+            print("Repo events successfully saved!")
             
     def load_old_events(self):
         # Load data from events json and return as old_events
@@ -172,28 +172,30 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
                     # If true, then subtract new count with old count to get difference,
                     # which is the total amount of new occurences for that event in it's repository
                     new_event_count = new_count - old_count
-                    count_status = f'{new_event_count} new'
+                    count_status = f'{new_event_count}'
                     repo_events[repo_name][event] = count_status # Update event value to equal count_status
                 else:
                     # If new count is not higher than old count, 
                     # then no new occurences of that event happened
-                    count_status = "0 new"
+                    count_status = 0
                     repo_events[repo_name][event] = count_status # Update event value to equal count_status
         return repo_events 
     
-    def fetch_event_status(self, repo_events):
+    def repo_event_status(self, repo_events):
+        # Method to check whether any new event's have occured in a repository
+        repo_event_count = 0
         for repo, event_dict in repo_events.items():
             for event in event_dict.keys():
                 if event == "PullRequestEvent":
-                    continue
-                if "0" not in event_dict.get(event):
-                    # If 0 is found in any of the event values, then set zero_events_status to be False,
-                    # since this means that not all events had 0 new occurences
-                    zero_events_status = False
+                    continue # Skip event if equal to pull request event, since these event's need to be processed differently
+                if event_dict.get(event) != 0:
+                    # If the event's value is not equal to 0, then add it's value with repo_event_count,
+                    # since the event's value/count is 1 or greater
+                    repo_event_count += event_dict.get(event)
+                    print(f"{repo_event_count} new events in {repo}")
             else:
-                # If above condition never returns true even once, then set zero_events_status to be True,
-                # since this means that all events had 0 in them, indicating that no new events occurred in that repository
-                zero_events_status = True
+                # If above condition never returns true even once, then tell user that no new event's have occured in that repo,
+                # since all event's will have a value of 0 
                 print(f'No new events in {repo}')
     
     def response_to_json(self, http_response):
