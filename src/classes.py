@@ -148,30 +148,73 @@ class EventHandling(APIDetails):
         with open(self.new_events_path, "r") as events_json:
             all_events = json.load(events_json)
         return all_events
+    
+    def check_new_pr_events(self, repo_events):
+        old_events = self.load_events()
+        self.events_to_json(repo_events)
+        new_events = self.load_events()
+
+        for repo, new_events_dict in new_events.items():
+            if repo not in old_events.keys():
+                continue # Skip repo if it does not exist in old version as a key
+            old_events_dict = old_events.get(repo)
+            for event, value in new_events_dict.items():
+                if event not in old_events_dict.keys():
+                    continue # Skip event if it does not exist in old version as a key
+                if event != "PullRequestEvent":
+                    continue # Skip all non pull request events
+                new_pr_actions = value # Save pull request actions dictionary containing count of pull requests per action
+                old_pr_actions = old_events_dict.get(event) # Save the same pull request actions dict but for the old version
+                if len(new_pr_actions) == 0 and len(old_pr_actions) == 0:
+                    # If length of pull requests dictionary in both versions of repo_events is 0, so if it has no action keys,
+                    # then we replace the empty dictionary containing no keys with the value of 0, and skip that pr event
+                    repo_events[repo][event] = 0
+                    continue
+                for action, count in new_pr_actions.items():
+                    if action not in old_pr_actions.keys():
+                        continue # Skip action if it's not present in old version as a key
+                    new_pr_count = count # Save value for current pr action from new version as new_count
+                    old_pr_count = old_pr_actions.get(action) # Save value for current pr action from old version as old_count
+                    if new_pr_count > old_pr_count:
+                        # if new pr count for current action is greater than the old pr count for the current action,
+                        # then new pull requests have occurred for that action
+                        new_pr_event_count = new_pr_count - old_pr_count 
+                        # Subtract new count with old count to get total amount of new occurrences for that type of pr action,
+                        # Then assign that new amount back to the action's key value in the original repo_events dictionary
+                        repo_events[repo][event][action] = new_pr_event_count
+                    else:
+                        # Else if new_pr_count is not greater than old_pr_count, then no new instances of that pr action happened,
+                        # thus we assign action to have the value of 0
+                        new_pr_event_count = 0
+                        repo_events[repo][event][action] = new_pr_event_count
+        return repo_events
 
     def check_new_events(self, repo_events):
         old_events = self.load_events() # Get previous version of events before new events are written to json file
         self.events_to_json(repo_events) # Write new events to new_events_dict.json file
         new_events = self.load_events() # Get new version of the events dictionary from the json file
+        # Call check_new_pr_events method to handle checking for new pr events separately, return updated version of repo_events
+        updated_repo_events = self.check_new_pr_events(new_events)  
 
-        for repo in new_events.keys():
-            repo_name = repo
-            new_events_dict = new_events.get(repo) # Get dictionary containing events for each repo
-            if repo_name not in old_events.keys():
+        for repo, new_events_dict in new_events.items():
+            if repo not in old_events.keys():
                 # Skip repo if repo key from new version of the events dictionary,
                 # does not exist as a repo key in the old version of the events dictionary
                 continue
-            old_events_dict = old_events.get(repo_name) # If repo exists, then get it's events dictionary
+            old_events_dict = old_events.get(repo) # If repo exists, then get it's events dictionary
             for event, count in new_events_dict.items():
                 if event == "PullRequestEvent":
-                    continue # Skip event key if it equals pull request event
+                    # Call check_new_pr_events to run different process to check for new pull requests,
+                    # which returns an updated version of the repo_events dictionary,
+                    # containing count of new pull request events per different pull request action
+                    continue
                 if event not in old_events_dict.keys():
                     # Skip event if event key from new version of events dictionary does not exist,
                     # as a key in the old version of the events dictionary
                     continue
                 # If event key from new_events repo dictionary exists as key in old_events repo dictionary,
                 # then get that key's value, which is the count of that event in that repository
-                new_count = new_events_dict.get(event) # Get new count for current event
+                new_count = count
                 old_count = old_events_dict.get(event) # Get old count for current event
                 if new_count > old_count:
                     # Check if the count of the event in the new version of the events dictionary,
@@ -179,13 +222,13 @@ class EventHandling(APIDetails):
                     # If true, then subtract new count with old count to get difference,
                     # which is the total amount of new occurences for that event in it's repository
                     new_event_count = new_count - old_count
-                    repo_events[repo_name][event] = new_event_count # Update event value to equal count_status
+                    updated_repo_events[repo][event] = new_event_count # Update event value to equal count_status
                 else:
                     # If new count is not higher than old count, 
                     # then no new occurences of that event happened
                     new_event_count = 0
-                    repo_events[repo_name][event] = new_event_count # Update event value to equal count_status
-        return repo_events 
+                    updated_repo_events[repo][event] = new_event_count # Update event value to equal count_status
+        return updated_repo_events
     
     def fetch_pr_event_status(self, new_events):
         # Checks pull request actions to see if any new pull requests were made in the repository
