@@ -71,17 +71,18 @@ class EventHandling(APIDetails):
     def create_events_dict(self, http_response):
         # Create events_dict dictionary with repo name as key, and initialize with empty dictionary
         events_dict = {dic['repo']['name']: dict() for dic in http_response}
-        for dictionary in http_response:
-            event_type = dictionary['type']
+        for event_response in http_response:
+            event_type = event_response['type']
             if event_type == "PullRequestEvent":
                 # If event is pullrequest event, then add event as key in events_dict repo dictionary,
-                # with an empty dictionary as it's initial value
-                for nested_dict in events_dict.values():
-                    nested_dict[event_type] = dict() #
+                # with an empty dictionary as it's initial value, then continue to next event response
+                for repo_dict in events_dict.values():
+                    repo_dict[event_type] = dict() 
+                continue
             # If event is anything besides pullrequest event, then add it as a key to repo dictionary,
             # but with an initial value of 0 instead of an empty dictionary
-            for nested_dict in events_dict.values():
-                nested_dict[event_type] = 0
+            for repo_dict in events_dict.values():
+                repo_dict[event_type] = 0
         return events_dict
     
     def count_events(self, http_response, events_dict): 
@@ -105,27 +106,28 @@ class EventHandling(APIDetails):
                 repo_dict[event_type] += 1 
         return events_counted
     
-    def count_pr_actions(self, http_response, events_dict):
-        for dictionary in http_response:
-            if dictionary['type'] != "PullRequestEvent":
+    def count_pr_actions(self, http_response, events_counted):
+        events_counted_pr = copy.deepcopy(events_counted)
+        for event_response in http_response:
+            if event_response['type'] != "PullRequestEvent":
                 continue # skip dictionary if event type is not pull request event
-            event_type = dictionary['type']
-            event_repo = dictionary['repo']['name']
-            pr_action = dictionary['payload']['action']
-            # if dictionary event type is pull request event, then save repo name, pr action, and event type
-            if event_repo not in events_dict.keys():
-                # Skip dictionary if event repo not found as key in events_dict
+            event_type = event_response['type']
+            event_repo = event_response['repo']['name']
+            pr_action = event_response['payload']['action']
+            # if response event type is pull request event, then save repo name, pr action, and event type
+            if event_repo not in events_counted_pr.keys():
+                # Skip event response if event repo not found as key in events_dict
                 continue 
             # If event repository does exist within events_dict as a key,
             # then return that key's value, which is a dictionary, and save it to repo_dict
-            repo_dict = events_dict.get(event_repo)
-            if event_type not in repo_dict.keys():
-                # Skip dictionary if event type not found as an event key within the repo's dictionary
+            events_dict = events_counted_pr.get(event_repo)
+            if event_type not in events_dict.keys():
+            # Skip dictionary if event type not found as an event key within the repo's dictionary
                 continue
             # If the event type exists as a key within repository dictionary keys,
             # then return that event key's value and save it as the pr_dict variable,
             # since the event type should be pullrequestevent, with a dictionary as it's value
-            pr_dict = repo_dict.get(event_type)
+            pr_dict = events_dict.get(event_type)
             if pr_action not in pr_dict.keys():
                 # If the pull request action does not yet exist as a key within the pr dictionary,
                 # then add it as a key with the initial value of 1,
@@ -136,7 +138,7 @@ class EventHandling(APIDetails):
                 # then increment it's value by 1, 
                 # since that action for the pull request event occured in the repository again
                 pr_dict[pr_action] += 1
-        return events_dict
+        return events_counted_pr
     
     def get_and_count_repo_events(self, http_response):
         # Main method to call all event dictionary related methods, 
