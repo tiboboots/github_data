@@ -11,8 +11,8 @@ class APIDetails: # Class for grouping constant api data together as attributes
         self.token = os.getenv("GITHUB_TOKEN")
         self.token_header = {"Authorization": f'token {self.token}'}
         self.api_url = "https://api.github.com/users/<username>/events?page"
-        self.file_path = "api_response.json"
-        self.new_events_path = "new_events_dict.json"
+        self.response_file_path = "api_response.json"
+        self.events_file_path = "events_dictionary.json"
 
 class APICall(APIDetails): # Inherits attributes from APIDetails parent class
     def __init__(self, user_name, api_page):
@@ -58,7 +58,7 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
     def response_to_json(self, http_response):
         if http_response is None: # Exit function if http_response is empty
             return
-        with open(self.file_path, "w") as json_file: # write fetched api data to json file
+        with open(self.response_file_path, "w") as json_file: # write fetched api data to json file
             json.dump(http_response, json_file, indent = 4)
             print("Response successfully retrieved and saved!")
     
@@ -144,12 +144,12 @@ class EventHandling(APIDetails):
     
     def events_to_json(self, repo_events):
         # write new repo events to json file
-        with open(self.new_events_path, "w") as events_json:
+        with open(self.events_file_path, "w") as events_json:
             json.dump(repo_events, events_json, indent = 4)
             
     def load_events(self):
         # Load repo events from json file
-        with open(self.new_events_path, "r") as events_json:
+        with open(self.events_file_path_path, "r") as events_json:
             all_events = json.load(events_json)
         return all_events
     
