@@ -3,5 +3,4 @@ fetchdata_raw.py
 api_response.json
 .env
 __pycache__
-new_events_dict.json
-old_events_dict.json
+events_dictionary.json
