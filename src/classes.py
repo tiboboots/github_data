@@ -56,8 +56,6 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
             return json_data
 
     def response_to_json(self, http_response):
-        if http_response is None: # Exit function if http_response is empty
-            return
         with open(self.response_file_path, "w") as json_file: # write fetched api data to json file
             json.dump(http_response, json_file, indent = 4)
             print("Response successfully retrieved and saved!")
