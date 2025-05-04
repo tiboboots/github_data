@@ -264,9 +264,11 @@ class EventHandling(APIDetails):
     
     def check_event_status(self, all_new_events):
         for repo, event_dict in all_new_events.items():
+            zero_events = True
             for event, event_count in event_dict.items():
                 if event_count > 0:
                     print(f"{event_count} new {event}s in {repo}")
-            else:
+                    zero_events = False
+            if zero_events == True:
                 print(f"No new events in {repo}")
                         
