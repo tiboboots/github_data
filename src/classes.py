@@ -68,20 +68,20 @@ class APICall(APIDetails): # Inherits attributes from APIDetails parent class
         return cleaned_http_response
     
 class EventHandling(APIDetails):
-    def create_events_dict(self, json_data):
+    def create_events_dict(self, http_response):
         # Create events_dict dictionary with repo name as key, and initialize with empty dictionary
-        events_dict = {dic['repo']['name']: dict() for dic in json_data}
-        for dictionary in json_data:
+        events_dict = {dic['repo']['name']: dict() for dic in http_response}
+        for dictionary in http_response:
             event_type = dictionary['type']
-            if event_type != "PullRequestEvent":
-                # if event_type is anything besides pullrequestevent, 
-                # then add it as a key with an initial value of 0 in events_dict
+            if event_type == "PullRequestEvent":
+                # If event is pullrequest event, then add event as key in events_dict repo dictionary,
+                # with an empty dictionary as it's initial value
                 for nested_dict in events_dict.values():
-                    nested_dict[event_type] = 0
-            else: # if event_type is pullrequest event, initialize it as a key with an empty dictionary in events_dict,
-                  # as pullrequest events contain various actions which we need to store and process differently
-                for nested_dict in events_dict.values():
-                    nested_dict[event_type] = dict()
+                    nested_dict[event_type] = dict() #
+            # If event is anything besides pullrequest event, then add it as a key to repo dictionary,
+            # but with an initial value of 0
+            for nested_dict in events_dict.values():
+                nested_dict[event_type] = 0
         return events_dict
     
     def count_events(self, http_response, events_dict):
@@ -147,7 +147,7 @@ class EventHandling(APIDetails):
             
     def load_events(self):
         # Load repo events from json file
-        with open(self.events_file_path_path, "r") as events_json:
+        with open(self.events_file_path, "r") as events_json:
             all_events = json.load(events_json)
         return all_events
     
