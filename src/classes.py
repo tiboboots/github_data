@@ -107,7 +107,7 @@ class EventHandling(APIDetails):
         return events_counted
     
     def count_pr_actions(self, http_response, events_counted):
-        events_counted_pr = copy.deepcopy(events_counted)
+        repo_events = copy.deepcopy(events_counted)
         for event_response in http_response:
             if event_response['type'] != "PullRequestEvent":
                 continue # skip dictionary if event type is not pull request event
@@ -115,12 +115,12 @@ class EventHandling(APIDetails):
             event_repo = event_response['repo']['name']
             pr_action = event_response['payload']['action']
             # if response event type is pull request event, then save repo name, pr action, and event type
-            if event_repo not in events_counted_pr.keys():
+            if event_repo not in repo_events.keys():
                 # Skip event response if event repo not found as key in events_dict
                 continue 
             # If event repository does exist within events_dict as a key,
             # then return that key's value, which is a dictionary, and save it to repo_dict
-            events_dict = events_counted_pr.get(event_repo)
+            events_dict = repo_events.get(event_repo)
             if event_type not in events_dict.keys():
             # Skip dictionary if event type not found as an event key within the repo's dictionary
                 continue
@@ -138,14 +138,14 @@ class EventHandling(APIDetails):
                 # then increment it's value by 1, 
                 # since that action for the pull request event occured in the repository again
                 pr_dict[pr_action] += 1
-        return events_counted_pr
+        return repo_events
     
     def get_and_count_repo_events(self, http_response):
         # Main method to call all event dictionary related methods, 
         # instead of having to call them individually
         events_dict = self.create_events_dict(http_response)
-        events_dict_counted = self.count_events(http_response, events_dict)
-        repo_events = self.count_pr_actions(http_response, events_dict_counted)
+        events_counted = self.count_events(http_response, events_dict)
+        repo_events = self.count_pr_actions(http_response, events_counted)
         return repo_events
     
     def events_to_json(self, repo_events):
