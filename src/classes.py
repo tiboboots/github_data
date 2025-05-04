@@ -79,25 +79,31 @@ class EventHandling(APIDetails):
                 for nested_dict in events_dict.values():
                     nested_dict[event_type] = dict() #
             # If event is anything besides pullrequest event, then add it as a key to repo dictionary,
-            # but with an initial value of 0
+            # but with an initial value of 0 instead of an empty dictionary
             for nested_dict in events_dict.values():
                 nested_dict[event_type] = 0
         return events_dict
     
-    def count_events(self, http_response, events_dict):
-        for dictionary in http_response:
-            if dictionary['type'] == "PullRequestEvent":
+    def count_events(self, http_response, events_dict): 
+        # Method to count total occurences of an event in http response and increment event key's value by 1 in events_dict,
+        # for each occurrence of that event in the http_response
+        events_counted = copy.deepcopy(events_dict)
+        for event_response in http_response:
+            if event_response['type'] == "PullRequestEvent":
                 continue # Skip dictionary if event type is equal to PullRequestEvent
-            for repo, nested_dict in events_dict.items():
-                if dictionary['repo']['name'] != repo or dictionary['type'] not in nested_dict.keys():
-                    # Skip dictionary if repo name does not match repo key in event_dict
-                    # or if dictionary event type is not a key in nested_dict keys
+                         # since pull request events need to be counted and processed differently
+            event_type = event_response['type']
+            for repo, repo_dict in events_counted.items():
+                if event_response['repo']['name'] != repo or event_type not in repo_dict.keys():
+                    # Skip event from response if repo name from response does not match repo key in event_dict
+                    # or if event response event type is not a key in repo's dictionary value 
                     continue 
-                # If event type is not PullRequestEvent, and dictionary repo name equals repo key in event_dict,
-                # and dictionary event type exists as key within nested_dict, 
-                # then access that event type's matching key in nested_dict and add 1 to it's value
-                nested_dict[dictionary['type']] += 1 
-        return events_dict
+                # If event type is not PullRequestEvent, the event's repo name from the response equals a repo key in repo_dict,
+                # and response event type exists as key within repo_dict, 
+                # then access that event type's matching key in repo_dict and add 1 to it's value,
+                # since that means that 1 instance of the event occured in the http response.
+                repo_dict[event_type] += 1 
+        return events_counted
     
     def count_pr_actions(self, http_response, events_dict):
         for dictionary in http_response:
